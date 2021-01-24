@@ -15,8 +15,8 @@ set(fcitx_kimpanel_sources
 
 add_definitions( -DLOCALEDIR=\"${CMAKE_INSTALL_PREFIX}/share/locale\" )
 
-fcitx_add_addon_full(kimpanel
+fcitx_add_addon_full(dueimkimpanel
 SOURCES ${fcitx_kimpanel_sources}
-IM_CONFIG fcitx-kimpanel.conf
+IM_CONFIG fcitx-dueimkimpanel.conf
 LINK_LIBS ${GLIB2_LIBRARIES} ${DBUS_LIBRARIES}
 )

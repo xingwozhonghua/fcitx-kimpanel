@@ -35,8 +35,8 @@
 #include <fcitx/hook.h>
 #include <fcitx/instance.h>
 #include <fcitx/module.h>
-#include <fcitx/ui.h>
 #include <fcitx/module/dbus/fcitx-dbus.h>
+#include <fcitx/ui.h>
 
 #include "config.h"
 
@@ -180,8 +180,8 @@ static void KimSetLookupTable(FcitxKimpanelUI *kimpanel, char *labels[],
                               int nLabel, char *texts[], int nText,
                               boolean has_prev, boolean has_next, int cursor,
                               int layout);
-static void KimAllCandidates(FcitxKimpanelUI* kimpanel,char *texts[],int nText);
-//static void KimCandidatesByTotalIndex(FcitxKimpanelUI* kimpanel,char *text);
+static void KimAllCandidates(FcitxKimpanelUI *kimpanel, char *texts[],
+                             int nText);
 static void KimUpdatePreeditText(FcitxKimpanelUI *kimpanel, char *text);
 static void KimUpdateAux(FcitxKimpanelUI *kimpanel, char *text);
 static void KimUpdatePreeditCaret(FcitxKimpanelUI *kimpanel, int position);
@@ -319,7 +319,7 @@ void *KimpanelCreate(FcitxInstance *instance) {
     FcitxKimpanelUI *kimpanel = fcitx_utils_malloc0(sizeof(FcitxKimpanelUI));
 
     kimpanel->addon = FcitxAddonsGetAddonByName(
-        FcitxInstanceGetAddons(instance), "fcitx-kimpanel-ui");
+        FcitxInstanceGetAddons(instance), "fcitx-dueimkimpanel");
     kimpanel->lastCursor = -2;
     kimpanel->version = 1;
     kimpanel->iCursorPos = 0;
@@ -597,8 +597,8 @@ void KimpanelShowInputWindow(void *arg) {
     FcitxCandidateWord *candWord = NULL;
 
     for (candWord = FcitxCandidateWordGetCurrentWindow(candList), i = 0;
-         candWord != NULL; candWord = FcitxCandidateWordGetCurrentWindowNext(
-                               candList, candWord),
+         candWord != NULL;
+         candWord = FcitxCandidateWordGetCurrentWindowNext(candList, candWord),
         i++) {
         totaltext[i] = FcitxCandidateWordGetChoose(candList);
     }
@@ -677,7 +677,7 @@ void KimpanelShowInputWindow(void *arg) {
         if (kimpanel->hasSetLookupTable)
             KimSetLookupTable(kimpanel, NULL, 0, NULL, 0, hasNext, hasNext, pos,
                               layout);
-        else if(kimpanel->hasAllCandidates)
+        else if (kimpanel->hasAllCandidates)
             KimAllCandidates(kimpanel, NULL, 0);
         else
             KimUpdateLookupTable(kimpanel, NULL, 0, NULL, 0, hasPrev, hasNext);
@@ -742,20 +742,39 @@ static DBusHandlerResult KimpanelDBusEventHandler(DBusConnection *connection,
                                                   DBusMessage *msg, void *arg) {
     FCITX_UNUSED(connection);
     FcitxKimpanelUI *kimpanel = (FcitxKimpanelUI *)arg;
+    FcitxInstance *instance = kimpanel->owner;
+    FcitxInputState *input = FcitxInstanceGetInputState(instance);
+    FcitxCandidateWordList *candList = FcitxInputStateGetCandidateList(input);
+	int total = FcitxCandidateWordGetListSize(candList);
 
-    if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
-                                    "Introspect")) {
+    if (dbus_message_is_method_call(msg, FCITX_KIMPANEL_INTERFACE,
+                                    "CandidatesByTotalIndex")) {
+		DBusError error;
+        dbus_error_init(&error);
+		char* text = "";	
+			
+		int index = -1;					
+		if(dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &index, DBUS_TYPE_INVALID))
+		{
+		  if(inde > -1 && index < total)
+		  {
+		  	FcitxCandidateWord *word = FcitxCandidateWordGetByTotalIndex(candList,index);
+			text = word->strWord;
+		  }
+		  reply = dbus_message_new_method_return(msg);
+        } else {
+		  reply = FcitxDBusPropertyUnknownMethod(msg);
+        }
+
+        dbus_error_free(&error);
         DBusMessage *reply = dbus_message_new_method_return(msg);
-
-        dbus_message_append_args(reply, DBUS_TYPE_STRING,
-                                 &kimpanel_introspection_xml,
-                                 DBUS_TYPE_INVALID);
+       
+        dbus_message_append_args(reply, DBUS_TYPE_STRING, &text, DBUS_TYPE_INVALID);					 
         dbus_connection_send(kimpanel->conn, reply, NULL);
-        dbus_message_unref(reply);
+		dbus_message_unref(reply);		
         return DBUS_HANDLER_RESULT_HANDLED;
-    }
-    else if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
-                                         "Introspect")) {
+    } else if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
+                                           "Introspect")) {
         DBusMessage *reply = dbus_message_new_method_return(msg);
 
         dbus_message_append_args(reply, DBUS_TYPE_STRING,
@@ -951,10 +970,6 @@ DBusHandlerResult KimpanelDBusFilter(DBusConnection *connection,
         FcitxInstanceRestart(instance);
         return DBUS_HANDLER_RESULT_HANDLED;
     } else if (dbus_message_is_signal(msg, "org.kde.impanel", "Configure")) {
-        FcitxLog(DEBUG, "Configure");
-        fcitx_utils_launch_configure_tool();
-        return DBUS_HANDLER_RESULT_HANDLED;
-    }else if (dbus_message_is_signal(msg, "org.kde.impanel", "SelectCandidatesByIndex")) {
         FcitxLog(DEBUG, "Configure");
         fcitx_utils_launch_configure_tool();
         return DBUS_HANDLER_RESULT_HANDLED;
@@ -1463,57 +1478,28 @@ void KimSetLookupTable(FcitxKimpanelUI *kimpanel, char *labels[], int nLabel,
     dbus_message_unref(msg);
 }
 
-//static void KimCandidatesByTotalIndex(FcitxKimpanelUI* kimpanel,
-//                                      char *text)
-//{
-//    dbus_uint32_t serial = 0; // unique number to associate replies with requests
-//    DBusMessage* msg;
-//    DBusMessageIter args;
-
-//    // create a signal and check for errors
-//    msg = dbus_message_new_method_call("org.kde.impanel",
-//                                       "/org/kde/impanel",
-//                                       "org.kde.impanel2",
-//                                       "KimCandidatesByTotalIndex"); // name of the signal
-
-//    // send the message and flush the connection
-//    if (!dbus_connection_send(kimpanel->conn, msg, &serial)) {
-//        FcitxLog(DEBUG, "Out Of Memory!");
-//    }
-
-//    char* subText="";
-//    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "s", &subText);
-//    if (!dbus_message_iter_append_basic(&subText, DBUS_TYPE_STRING, &text)) {
-//        FcitxLog(DEBUG, "Out Of Memory!");
-//    }
-
-//    // free the message
-//    dbus_message_unref(msg);
-//}
-
-static void KimAllCandidates(FcitxKimpanelUI* kimpanel,
-                           char *texts[],
-                           int nText)
-{
-    dbus_uint32_t serial = 0; // unique number to associate replies with requests
-    DBusMessage* msg;
+static void KimAllCandidates(FcitxKimpanelUI *kimpanel, char *texts[],
+                             int nText) {
+    dbus_uint32_t serial =
+        0; // unique number to associate replies with requests
+    DBusMessage *msg;
     DBusMessageIter args;
 
     // create a signal and check for errors
-    msg = dbus_message_new_method_call("org.kde.impanel",
-                                       "/org/kde/impanel",
-                                       "org.kde.impanel2",
-                                       "KimAllCandidates"); // name of the signal
+    msg = dbus_message_new_method_call(
+        "org.kde.impanel", "/org/kde/impanel", "org.kde.impanel2",
+        "KimAllCandidates"); // name of the signal
 
     // send the message and flush the connection
     if (!dbus_connection_send(kimpanel->conn, msg, &serial)) {
         FcitxLog(DEBUG, "Out Of Memory!");
     }
 
-    char* subText="";
+    char *subText = "";
     dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "s", &subText);
     for (int i = 0; i < nText; i++) {
-        if (!dbus_message_iter_append_basic(&subText, DBUS_TYPE_STRING, &texts[i])) {
+        if (!dbus_message_iter_append_basic(&subText, DBUS_TYPE_STRING,
+                                            &texts[i])) {
             FcitxLog(DEBUG, "Out Of Memory!");
         }
     }

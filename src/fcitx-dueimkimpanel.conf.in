@@ -1,10 +1,10 @@
 [Addon]
-Name=fcitx-kimpanel
-_GeneralName=Kimpanel
+Name=fcitx-dueimkimpanel
+_GeneralName=DueImKimpanel
 _Comment=Kimpanel Support for Fcitx
 Category=UI
 Enabled=True
-Library=fcitx-kimpanel.so
+Library=fcitx-dueimkimpanel.so
 Type=SharedLibrary
 Dependency=fcitx-dbus
 Priority=50
