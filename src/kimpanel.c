@@ -753,10 +753,11 @@ static DBusHandlerResult KimpanelDBusEventHandler(DBusConnection *connection,
         dbus_error_init(&error);
 		char* text = "";	
 			
-		int index = -1;					
+        int index = -1;
+        DBusMessage *reply;
 		if(dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &index, DBUS_TYPE_INVALID))
 		{
-		  if(inde > -1 && index < total)
+          if(index > -1 && index < total)
 		  {
 		  	FcitxCandidateWord *word = FcitxCandidateWordGetByTotalIndex(candList,index);
 			text = word->strWord;
@@ -767,9 +768,10 @@ static DBusHandlerResult KimpanelDBusEventHandler(DBusConnection *connection,
         }
 
         dbus_error_free(&error);
-        DBusMessage *reply = dbus_message_new_method_return(msg);
-       
-        dbus_message_append_args(reply, DBUS_TYPE_STRING, &text, DBUS_TYPE_INVALID);					 
+
+        dbus_message_append_args(reply, DBUS_TYPE_STRING,
+                                 &text,
+                                 DBUS_TYPE_INVALID);
         dbus_connection_send(kimpanel->conn, reply, NULL);
 		dbus_message_unref(reply);		
         return DBUS_HANDLER_RESULT_HANDLED;
