@@ -118,10 +118,6 @@ const char *kimpanel_introspection_xml =
     "<signal name=\"Enable\">"
     "<arg name=\"toenable\" direction=\"in\" type=\"b\"/>"
     "</signal>"
-    "<method name=\"CandidatesByTotalIndex\">"
-    "<arg name=\"index\" direction=\"in\" type=\"i\"/>"
-    "<arg name=\"text\" direction=\"out\" type=\"as\"/>"
-    "</method>"
     "</interface>"
     "</node>";
 
@@ -742,39 +738,8 @@ static DBusHandlerResult KimpanelDBusEventHandler(DBusConnection *connection,
                                                   DBusMessage *msg, void *arg) {
     FCITX_UNUSED(connection);
     FcitxKimpanelUI *kimpanel = (FcitxKimpanelUI *)arg;
-    FcitxInstance *instance = kimpanel->owner;
-    FcitxInputState *input = FcitxInstanceGetInputState(instance);
-    FcitxCandidateWordList *candList = FcitxInputStateGetCandidateList(input);
-    int total = FcitxCandidateWordGetListSize(candList);
 
-    if (dbus_message_is_method_call(msg, FCITX_KIMPANEL_INTERFACE,
-                                    "CandidatesByTotalIndex")) {
-        DBusError error;
-        dbus_error_init(&error);
-        char *text = "";
-
-        int index = -1;
-        DBusMessage *reply;
-        if (dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &index,
-                                  DBUS_TYPE_INVALID)) {
-            if (index > -1 && index < total) {
-                FcitxCandidateWord *word =
-                    FcitxCandidateWordGetByTotalIndex(candList, index);
-                text = word->strWord;
-            }
-            reply = dbus_message_new_method_return(msg);
-        } else {
-            reply = FcitxDBusPropertyUnknownMethod(msg);
-        }
-
-        dbus_error_free(&error);
-
-        dbus_message_append_args(reply, DBUS_TYPE_STRING, &text,
-                                 DBUS_TYPE_INVALID);
-        dbus_connection_send(kimpanel->conn, reply, NULL);
-        dbus_message_unref(reply);
-        return DBUS_HANDLER_RESULT_HANDLED;
-    } else if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
+    if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
                                            "Introspect")) {
         DBusMessage *reply = dbus_message_new_method_return(msg);
 
@@ -824,6 +789,17 @@ DBusHandlerResult KimpanelDBusFilter(DBusConnection *connection,
         dbus_error_free(&error);
         return DBUS_HANDLER_RESULT_HANDLED;
     } else if (dbus_message_is_signal(msg, "org.kde.impanel",
+                                     "SelectTotalCandidate")) {
+       FcitxLog(DEBUG, "SelectTotalCandidate: ");
+       DBusError error;
+       dbus_error_init(&error);
+       if (dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &int0,
+                                 DBUS_TYPE_INVALID)) {
+           FcitxInstanceTotalChooseCandidateByIndex(instance, int0);
+       }
+       dbus_error_free(&error);
+       return DBUS_HANDLER_RESULT_HANDLED;
+   } else if (dbus_message_is_signal(msg, "org.kde.impanel",
                                       "LookupTablePageUp")) {
         FcitxLog(DEBUG, "LookupTablePageUp");
         if (FcitxCandidateWordPageCount(
