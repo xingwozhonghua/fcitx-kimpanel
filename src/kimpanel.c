@@ -745,35 +745,34 @@ static DBusHandlerResult KimpanelDBusEventHandler(DBusConnection *connection,
     FcitxInstance *instance = kimpanel->owner;
     FcitxInputState *input = FcitxInstanceGetInputState(instance);
     FcitxCandidateWordList *candList = FcitxInputStateGetCandidateList(input);
-	int total = FcitxCandidateWordGetListSize(candList);
+    int total = FcitxCandidateWordGetListSize(candList);
 
     if (dbus_message_is_method_call(msg, FCITX_KIMPANEL_INTERFACE,
                                     "CandidatesByTotalIndex")) {
-		DBusError error;
+        DBusError error;
         dbus_error_init(&error);
-		char* text = "";	
-			
+        char *text = "";
+
         int index = -1;
         DBusMessage *reply;
-		if(dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &index, DBUS_TYPE_INVALID))
-		{
-          if(index > -1 && index < total)
-		  {
-		  	FcitxCandidateWord *word = FcitxCandidateWordGetByTotalIndex(candList,index);
-			text = word->strWord;
-		  }
-		  reply = dbus_message_new_method_return(msg);
+        if (dbus_message_get_args(msg, &error, DBUS_TYPE_INT32, &index,
+                                  DBUS_TYPE_INVALID)) {
+            if (index > -1 && index < total) {
+                FcitxCandidateWord *word =
+                    FcitxCandidateWordGetByTotalIndex(candList, index);
+                text = word->strWord;
+            }
+            reply = dbus_message_new_method_return(msg);
         } else {
-		  reply = FcitxDBusPropertyUnknownMethod(msg);
+            reply = FcitxDBusPropertyUnknownMethod(msg);
         }
 
         dbus_error_free(&error);
 
-        dbus_message_append_args(reply, DBUS_TYPE_STRING,
-                                 &text,
+        dbus_message_append_args(reply, DBUS_TYPE_STRING, &text,
                                  DBUS_TYPE_INVALID);
         dbus_connection_send(kimpanel->conn, reply, NULL);
-		dbus_message_unref(reply);		
+        dbus_message_unref(reply);
         return DBUS_HANDLER_RESULT_HANDLED;
     } else if (dbus_message_is_method_call(msg, DBUS_INTERFACE_INTROSPECTABLE,
                                            "Introspect")) {
