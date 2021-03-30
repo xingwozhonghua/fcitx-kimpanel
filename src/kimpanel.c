@@ -31,7 +31,7 @@
 #include "config.h"
 #include "fcitx/ui.h"
 #include "fcitx-utils/log.h"
-#include "module/dbus/fcitx-dbus.h"
+#include "fcitx/module/dbus/fcitx-dbus.h"
 #include "fcitx/instance.h"
 #include "fcitx/module.h"
 #include "fcitx/frontend.h"
