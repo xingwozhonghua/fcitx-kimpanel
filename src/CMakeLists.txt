@@ -17,6 +17,6 @@ add_definitions( -DLOCALEDIR=\"${CMAKE_INSTALL_PREFIX}/share/locale\" )
 
 fcitx_add_addon_full(kimpanel-ui
 SOURCES ${fcitx_kimpanel_ui_sources}
-IM_CONFIG fcitx-kimpanel-ui.conf
+CONF_SRC fcitx-kimpanel-ui.conf
 LINK_LIBS ${GLIB2_LIBRARIES} ${DBUS_LIBRARIES}
 )
