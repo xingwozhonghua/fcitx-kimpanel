@@ -253,8 +253,8 @@ static void SetIMIcon(FcitxInstance* instance, char** prop)
     FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
     if (ic == NULL) {
         icon = "kbd";
-        imname = _("No input window");
-        description = _("No input window");
+        imname = ("No input window");
+        description = ("No input window");
     } else if (FcitxInstanceGetCurrentStatev2(instance) == IS_ACTIVE) {
         FcitxIM* im = FcitxInstanceGetCurrentIM(instance);
         if (im) {
@@ -279,13 +279,13 @@ static void SetIMIcon(FcitxInstance* instance, char** prop)
             description = im->strName;
         } else {
             icon = "kbd";
-            imname = _("Disabled");
-            description = _("Input Method Disabled");
+            imname = ("Disabled");
+            description = ("Input Method Disabled");
         }
     } else {
         icon = "kbd";
-        imname = _("Disabled");
-        description = _("Input Method Disabled");
+        imname = ("Disabled");
+        description = ("Input Method Disabled");
     }
     /* add fcitx- prefix, unless icon name is an absolute path */
 
@@ -395,7 +395,7 @@ void KimpanelRegisterAllStatus(FcitxKimpanelUI* kimpanel)
     UT_array* uicompstats = FcitxInstanceGetUIComplexStats(instance);
     char **prop = fcitx_utils_malloc0(sizeof(char*) * (2 + utarray_len(uistats) + utarray_len(uicompstats)));
 
-    char *fcitx = _("Fcitx");
+    char *fcitx = ("Fcitx");
     fcitx_utils_alloc_cat_str(prop[0], "/Fcitx/logo:", fcitx, ":fcitx:", fcitx, ":menu");
     SetIMIcon(instance, &prop[1]);
 
@@ -779,10 +779,10 @@ DBusHandlerResult KimpanelDBusFilter(DBusConnection* connection, DBusMessage* ms
                 s0 += strlen("/Fcitx/");
                 if (strcmp("logo", s0) == 0) {
                     char *prop[2];
-                    char *trans_str = _("Toggle Input Method");
+                    char *trans_str = ("Toggle Input Method");
                     fcitx_utils_alloc_cat_str(prop[0], "/Fcitx/logo/toggle:",
                                               trans_str, "::", trans_str);
-                    trans_str = _("Restart");
+                    trans_str = ("Restart");
                     fcitx_utils_alloc_cat_str(prop[1], "/Fcitx/logo/restart:",
                                               trans_str, ":view-refresh:",
                                               trans_str);

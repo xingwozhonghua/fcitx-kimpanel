@@ -3,20 +3,16 @@ include_directories (
     ${FCITX4_FCITX_UTILS_INCLUDE_DIRS}
     ${FCITX4_FCITX_CONFIG_INCLUDE_DIRS}
     ${FCITX4_FCITX_INCLUDE_DIRS}
-    ${GLIB2_INCLUDE_DIR}
     ${DBUS_INCLUDE_DIR}
     ${DBUS_ARCH_INCLUDE_DIR}
     )
 
-
-set(fcitx_kimpanel_ui_sources
+set(FCITX_KIMPANEL_UI_SOURCES
   kimpanel.c
   )
 
-add_definitions( -DLOCALEDIR=\"${CMAKE_INSTALL_PREFIX}/share/locale\" )
-
 fcitx_add_addon_full(kimpanel-ui
-SOURCES ${fcitx_kimpanel_ui_sources}
+SOURCES ${FCITX_KIMPANEL_UI_SOURCES}
 CONF_SRC fcitx-kimpanel-ui.conf
-LINK_LIBS ${GLIB2_LIBRARIES} ${DBUS_LIBRARIES}
+LINK_LIBS ${DBUS_LIBRARIES}
 )
